@@ -48,6 +48,38 @@
             margin-top: 0;
         }
 
+        /* --- 封面樣式 --- */
+        #cover-section {
+            display: block; /* 初始顯示 */
+            text-align: center;
+            padding: 40px 30px;
+        }
+
+        .cover-title {
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .cover-intro {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 40px;
+            color: #555;
+        }
+
+        .start-btn {
+            background-color: black; /* 開始按鈕用深色 */
+            font-size: 1.3rem;
+            padding: 18px;
+            max-width: 80%;
+            margin: 0 auto;
+        }
+        .start-btn:hover {
+            background-color: #333;
+        }
+
         /* --- 進度條 --- */
         .progress-container {
             width: 100%;
@@ -67,7 +99,7 @@
 
         /* --- 題目區塊 --- */
         #quiz-section {
-            display: block;
+            display: none; /* 初始隱藏 */
         }
 
         .question-text {
@@ -155,7 +187,7 @@
 
         /* --- 結果區塊 --- */
         #result-section {
-            display: none; /* 預設隱藏 */
+            display: none; /* 初始隱藏 */
             text-align: center;
         }
 
@@ -205,6 +237,9 @@
 
         /* --- 響應式調整 (手機版) --- */
         @media (max-width: 480px) {
+            .cover-title {
+                 font-size: 1.8rem;
+            }
             .question-text {
                 font-size: 1.2rem;
             }
@@ -218,6 +253,10 @@
             .action-buttons {
                 flex-direction: column;
             }
+            .start-btn {
+                width: 100%;
+                max-width: 100%;
+            }
         }
     </style>
 </head>
@@ -225,6 +264,17 @@
 
 <div class="container">
     
+    <div id="cover-section" class="card">
+        <h1 class="cover-title">測驗：你的靈魂像哪種動物？</h1>
+        <div class="cover-intro">
+            <p>每個人內心深處，都住著一種動物靈魂。</p>
+            <p>也許是穩重擔當的【馬】，<br>也許是聰慧防備的【狐狸】，<br>
+               也許是敏感真誠的【男孩】，<br>又或者是溫暖支持的【鼴鼠】。</p>
+            <p style="margin-top: 20px; font-weight: bold;">透過五個問題，探索你在面對挑戰、人際與挫折時的真實樣貌。</p>
+        </div>
+        <button class="btn start-btn" onclick="startQuiz()">開始測驗</button>
+    </div>
+
     <div id="quiz-section" class="card">
         <div class="progress-container">
             <div class="progress-bar" id="progressBar"></div>
@@ -282,7 +332,7 @@
             text: "2. 在人際互動中，當朋友需要幫忙/情緒低落時，你通常會：",
             options: [
                 { text: "鼓勵他們「快起來、一起去做點什麼」", type: "A" },
-                { text: "安靜陪伴、傾聽他們說出來", type: "B" }, // 雖然B是狐狸，但在這題B選項偏傾聽，但邏輯上維持題目選項原意
+                { text: "安靜陪伴、傾聽他們說出來", type: "B" },
                 { text: "有點退縮、不太確定怎麼幫比較好", type: "C" },
                 { text: "主動提供支持、做好後勤或照顧他們", type: "D" }
             ]
@@ -373,7 +423,7 @@
     };
 
     /* =========================================
-       2. 程式邏輯區 (與前版相同)
+       2. 程式邏輯區
        =========================================
     */
 
@@ -382,11 +432,23 @@
     let selectedOption = null;
     let myRadarChart = null;
 
-    // 初始化
-    document.addEventListener("DOMContentLoaded", () => {
+    // 移除原本的 DOMContentLoaded 自動開始，改為手動觸發
+    // document.addEventListener("DOMContentLoaded", () => { ... });
+
+    // --- 新增：開始測驗函數 ---
+    function startQuiz() {
+        // 隱藏封面
+        document.getElementById("cover-section").style.display = "none";
+        // 顯示題目區
+        document.getElementById("quiz-section").style.display = "block";
+        
+        // 初始化
+        currentQuestionIndex = 0;
+        scores = { A: 0, B: 0, C: 0, D: 0 };
+        selectedOption = null;
         renderQuestion();
         updateProgressBar();
-    });
+    }
 
     // 渲染題目
     function renderQuestion() {
@@ -485,7 +547,6 @@
         if (topTypes.length === 1) {
             const type = topTypes[0];
             finalTitle = resultsData[type].title;
-            // 加上副標題
             finalDesc = `<h3 style='margin-bottom:20px; color:#555;'>${resultsData[type].subtitle}</h3>` + resultsData[type].desc;
         } else {
             finalTitle = "混合型靈魂";
@@ -500,7 +561,7 @@
         }
 
         document.getElementById("main-result-type").innerText = finalTitle;
-        document.getElementById("full-analysis").innerHTML = finalDesc; // 改用 innerHTML 以支援 HTML標籤
+        document.getElementById("full-analysis").innerHTML = finalDesc;
     }
 
     // 繪製雷達圖
@@ -511,12 +572,11 @@
         myRadarChart = new Chart(ctx, {
             type: 'radar',
             data: {
-                // 更新雷達圖標籤以對應動物特質
                 labels: ['馬型 (行動)', '狐狸型 (思考)', '男孩型 (敏銳)', '鼴鼠型 (溫暖)'],
                 datasets: [{
                     label: '特質比重',
                     data: [scores.A, scores.B, scores.C, scores.D],
-                    backgroundColor: 'rgba(85, 85, 85, 0.2)', // 改為灰黑色系以符合你的設計風格
+                    backgroundColor: 'rgba(85, 85, 85, 0.2)',
                     borderColor: 'rgba(85, 85, 85, 1)',
                     borderWidth: 2,
                     pointBackgroundColor: 'rgba(0, 0, 0, 1)',
@@ -549,11 +609,13 @@
         link.click();
     }
 
+    // 重新測驗 (修改為回到第一題，而非封面)
     function restartQuiz() {
         currentQuestionIndex = 0;
         scores = { A: 0, B: 0, C: 0, D: 0 };
         selectedOption = null;
         document.getElementById("result-section").style.display = "none";
+        document.getElementById("cover-section").style.display = "none"; // 確保封面隱藏
         document.getElementById("quiz-section").style.display = "block";
         renderQuestion();
         updateProgressBar();
